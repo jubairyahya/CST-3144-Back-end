@@ -73,5 +73,32 @@ app.post('/admin/login', (req, res) => {
   res.status(401).json({ message: 'Invalid credentials' });
 });
 
+// Get all lessons
+app.get('/lessons', async (req, res) => {
+  try {
+    const lessons = await lessonsCollection.find().toArray();
+    res.json(lessons);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch lessons', error: err.message });
+  }
+});
+
+// Admin adds lesson
+app.post('/admin/lessons', checkAdmin, upload.single('image'), async (req, res) => {
+  try {
+    const { topic, location, price, space } = req.body;
+    const image = req.file ? req.file.filename : null;
+    if (!topic || !location || !price || !space || !image)
+      return res.status(400).json({ message: 'All fields required' });
+
+    const newLesson = { topic, location, price: Number(price), space: Number(space), image };
+    const result = await lessonsCollection.insertOne(newLesson);
+    res.status(201).json({ message: 'Lesson added successfully', id: result.insertedId });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to add lesson', error: err.message });
+  }
+});
+
+
 
 app.listen(port,()=>console.log(`Server started on port ${port}`));

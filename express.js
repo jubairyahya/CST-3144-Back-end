@@ -159,4 +159,121 @@ app.get('/search', async (req, res) => {
   }
 });
 
+// Get all orders
+app.get('/orders', async (req, res) => {
+  try {
+    const orders = await ordersCollection.find().toArray();
+    res.json(orders);
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to fetch orders', error: err.message });
+  }
+});
+
+// Add new order & reduce availability
+app.post('/orders', async (req, res) => {
+  try {
+    const {
+      firstName,
+      lastName,
+      address,
+      city,
+      country,   
+      postcode,
+      phone,
+      email,
+      lessonIDs,
+      quantities,
+      paymentMethod,
+      cardLast4,
+      cardBrand
+    } = req.body;
+
+    //  Validate required fields
+    if (
+      !firstName ||
+      !lastName ||
+      !address ||
+      !city ||
+      !country ||   
+      !postcode ||
+      !phone ||
+      !email ||
+      !lessonIDs ||
+      !quantities
+    ) {
+      return res.status(400).json({ message: 'Missing required fields' });
+    }
+    let paymentResult = { success: true, message: 'Payment processed successfully ' };
+
+    if (paymentMethod === 'card') {
+      paymentResult = {
+        success: true,
+        message: `card payment succeeded for ${cardBrand?.toUpperCase() || 'CARD'} ****${cardLast4 || '####'}`
+      };
+    } else if (paymentMethod === 'paypal') {
+      paymentResult = { success: true, message: ' PayPal payment completed' };
+    }
+
+    //  Validate lesson IDs and quantities
+    if (
+      !Array.isArray(lessonIDs) ||
+      !Array.isArray(quantities) ||
+      lessonIDs.length !== quantities.length
+    ) {
+      return res.status(400).json({ message: 'Invalid lessonIDs or quantities' });
+    }
+
+    //  Reduce availability for each lesson
+    for (let i = 0; i < lessonIDs.length; i++) {
+      const lessonId = lessonIDs[i];
+      const qty = quantities[i];
+
+      const lesson = await lessonsCollection.findOne({ _id: new ObjectId(lessonId) });
+      if (!lesson) {
+        return res.status(404).json({ message: `Lesson not found (ID: ${lessonId})` });
+      }
+      if (lesson.space < qty) {
+        return res.status(400).json({ message: `Not enough space for ${lesson.topic}` });
+      }
+
+      await lessonsCollection.updateOne(
+        { _id: new ObjectId(lessonId) },
+        { $inc: { space: -qty } }
+      );
+    }
+
+   
+    const newOrder = {
+      firstName,
+      lastName,
+      address,
+      city,
+      country,   
+      postcode,
+      phone,
+      email,
+      lessonIDs,
+      quantities,
+       paymentMethod,
+      paymentStatus: paymentResult.success ? 'paid' : 'failed',
+      paymentMessage: paymentResult.message,
+      date: new Date(),
+    };
+
+    
+    const result = await ordersCollection.insertOne(newOrder);
+
+    res.status(201).json({
+      message: 'Order placed successfully!',
+      insertedId: result.insertedId,
+      paymentStatus: newOrder.paymentStatus,
+      paymentMessage: newOrder.paymentMessage,
+    });
+
+  } catch (err) {
+    console.error('❌ Failed to add order:', err);
+    res.status(500).json({ message: 'Failed to add order', error: err.message });
+  }
+});
+
 app.listen(port,()=>console.log(`Server started on port ${port}`));

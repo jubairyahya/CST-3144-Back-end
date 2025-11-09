@@ -98,7 +98,46 @@ app.post('/admin/lessons', checkAdmin, upload.single('image'), async (req, res) 
     res.status(500).json({ message: 'Failed to add lesson', error: err.message });
   }
 });
+// update lesson 
+app.put ('/lessons/:id',async (req, res) => {
+try {
+    const lessonId = req.params.id;
+    const updateData = req.body;
 
+    const result = await lessonsCollection.updateOne(
+      { _id: new ObjectId(lessonId) },
+      { $set: updateData }
+    );
+
+    if (result.matchedCount === 0) return res.status(404).json({ message: 'Lesson not found' });
+    res.json({ message: 'Lesson updated successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to update lesson', error: err.message });
+  }
+}
+);
+
+// Delete lesson route
+app.delete('/lessons/:id', async (req, res) => {
+  const { id } = req.params;
+
+  if (!ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid lesson ID' });
+  }
+
+  try {
+    const result = await lessonsCollection.deleteOne({ _id: new ObjectId(id) });
+
+    if (result.deletedCount === 0) {
+      return res.status(404).json({ message: 'Lesson not found' });
+    }
+
+    res.status(200).json({ message: 'Deleted successfully' });
+  } catch (err) {
+    console.error('Delete error:', err);
+    res.status(500).json({ message: 'Failed to delete lesson', error: err.message });
+  }
+});
 
 
 app.listen(port,()=>console.log(`Server started on port ${port}`));

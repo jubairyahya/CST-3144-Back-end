@@ -139,5 +139,24 @@ app.delete('/lessons/:id', async (req, res) => {
   }
 });
 
+// Search lessons
+app.get('/search', async (req, res) => {
+  try {
+    const query = req.query.q;
+    if (!query) return res.json([]);
+    const regex = new RegExp(query, 'i');
+    const results = await lessonsCollection.find({
+      $or: [
+        { topic: regex },
+        { location: regex },
+        { price: regex.toString() },
+        { space: regex.toString() }
+      ]
+    }).toArray();
+    res.json(results);
+  } catch (err) {
+    res.status(500).json({ message: 'Search failed', error: err.message });
+  }
+});
 
 app.listen(port,()=>console.log(`Server started on port ${port}`));

@@ -87,14 +87,15 @@ app.get('/lessons', async (req, res) => {
 // Admin adds lesson
 app.post('/admin/lessons', checkAdmin, upload.single('image'), async (req, res) => {
   try {
-    const { topic, location, price, space,description } = req.body;
-   const imageUrl = req.file
-  ? `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
-  : null;
-    if (!topic || !location || !price || !space || !imageUrl || !description)
+    const { topic, location, price, space,description,imageUrl } = req.body;
+   const finalImageUrl = req.file
+      ? `${req.protocol}://${req.get('host')}/images/${req.file.filename}`
+      : imageUrl || null;
+
+    if (!topic || !location || !price || !space || !finalImageUrl || !description)
       return res.status(400).json({ message: 'All fields required' });
 
-    const newLesson = { topic, location, price: Number(price), space: Number(space), image: imageUrl,description };
+    const newLesson = { topic, location, price: Number(price), space: Number(space), image:finalImageUrl,description };
     const result = await lessonsCollection.insertOne(newLesson);
     res.status(201).json({ message: 'Lesson added successfully', id: result.insertedId });
   } catch (err) {

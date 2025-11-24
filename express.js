@@ -64,9 +64,10 @@ app.get("/", (req, res) => {
   res.send("Backend is running ");
 }); 
 //admin 
-const ADMIN_USERNAME = 'zuzu';
-const ADMIN_PASSWORD = '1234';
-const ADMIN_KEY = 'secret123';
+const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+const ADMIN_KEY = process.env.ADMIN_KEY;
+
 
 function checkAdmin(req, res, next) {
   if (req.headers['x-admin-key'] !== ADMIN_KEY) return res.status(403).json({ message: 'Forbidden' });

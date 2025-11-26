@@ -9,14 +9,14 @@ const {MongoClient, ObjectId}=require('mongodb');
 const port = process.env.PORT || 5000;
 
 
-const multer=require('multer');
+
 
 
 //--middleware
 
 app.use(cors());
 app.use(express.json());
-app.use('/images', express.static(path.join(__dirname, 'images')));
+
 
 //logger middleware
 app.use((req, res, next) => {
@@ -45,19 +45,12 @@ async function connectDB() {
     ordersCollection = db.collection('orders');
     console.log(' MongoDB connected to lessonShopDB');
   } catch (err) {
-    console.error('❌ MongoDB connection failed:', err);
+    console.error(' MongoDB connection failed:', err);
     process.exit(1);
   }
 }
 connectDB();
 
-// multer set up
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, path.join(__dirname, 'images')),
-  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
-const upload = multer({ storage });
 
 
 app.get("/", (req, res) => {
@@ -279,7 +272,7 @@ app.post('/orders', async (req, res) => {
     });
 
   } catch (err) {
-    console.error('❌ Failed to add order:', err);
+    console.error(' Failed to add order:', err);
     res.status(500).json({ message: 'Failed to add order', error: err.message });
   }
 });

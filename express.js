@@ -23,6 +23,14 @@ app.use((req, res, next) => {
   console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
   next();
 });
+// check
+app.get("/", (req, res) => {
+  res.status(200).json({
+    status: "ok",
+    service: "Lesson Shop Backend",
+    time: new Date().toISOString()
+  });
+});
 
 //mongodb connection
 const user = encodeURIComponent(process.env.DB_USER);
@@ -51,11 +59,7 @@ async function connectDB() {
 }
 connectDB();
 
-
-
-app.get("/", (req, res) => {
-  res.send("Backend is running ");
-}); 
+ 
 //admin 
 const ADMIN_USERNAME = process.env.ADMIN_USERNAME;
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
@@ -276,5 +280,8 @@ app.post('/orders', async (req, res) => {
     res.status(500).json({ message: 'Failed to add order', error: err.message });
   }
 });
-
-app.listen(port,()=>console.log(`Server started on port ${port}`));
+//start server
+app.listen(port, async () => {
+  console.log(`Server started on port ${port}`);
+  await connectDB(); 
+});
